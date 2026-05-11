@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Your Treasure Awaits ✨</title>
+  <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Lora:ital,wght@0,400;0,600;1,400;1,600&family=Playfair+Display:ital,wght@0,700;1,600&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --dark:      #2E1F26;
+      --amber:     #C87740;
+      --amber-l:   #E8A86C;
+      --amber-gl:  #F0C898;
+      --paper:     #F0DEB0;
+      --ink:       #2A1608;
+      --sh-dark:   #1A1018;
+      --sh-light:  #452E3A;
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; background:var(--dark); font-family:'Special Elite',cursive; overflow:hidden; }
+
+    /* grain */
+    body::before {
+      content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+      background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='300' height='300' filter='url(%23n)' opacity='1'/></svg>");
+      opacity:0.035;
+    }
+    /* warm glow */
+    body::after {
+      content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+      background:radial-gradient(ellipse 70% 60% at 50% 55%, rgba(200,119,64,0.09) 0%, transparent 100%);
+    }
+
+    /* ── SCREENS ── */
+    .screen {
+      position:fixed; inset:0; z-index:1;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      padding:20px; overflow-y:auto;
+      opacity:0; pointer-events:none;
+      transition:opacity 0.65s ease, transform 0.5s ease;
+      transform:translateY(8px);
+    }
+    .screen.active  { opacity:1; pointer-events:all; transform:translateY(0); }
+    .screen.exit    { opacity:0; transform:translateY(-8px); }
+
+    /* ── NEUMORPHISM ── */
+    .neu    { background:var(--dark); border-radius:20px; box-shadow:9px 9px 22px var(--sh-dark),-5px -5px 16px var(--sh-light); }
+    .neu-sm { background:var(--dark); border-radius:14px; box-shadow:6px 6px 15px var(--sh-dark),-4px -4px 10px var(--sh-light); }
+    .neu-in { background:var(--dark); border-radius:10px; box-shadow:inset 5px 5px 14px var(--sh-dark),inset -3px -3px 10px var(--sh-light); }
+    .btn-press { transition:box-shadow 0.15s,color 0.15s; }
+    .btn-press:active:not(:disabled) { box-shadow:inset 4px 4px 10px var(--sh-dark),inset -2px -2px 8px var(--sh-light) !important; }
+
+    /* ── BURNT PAPER ── */
+    .paper {
+      position:relative; overflow:hidden;
+      background:
+        repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(160,120,60,.05) 59px,rgba(160,120,60,.05) 60px),
+        repeating-linear-gradient(transparent,transparent 31px,rgba(140,100,40,.04) 31px,rgba(140,100,40,.04) 32px),
+        linear-gradient(138deg,#F4E4B4 0%,#EDD898 30%,#F1E2B0 60%,#E8D084 100%);
+      border-radius:3px; color:var(--ink);
+    }
+    .paper::after {
+      content:''; position:absolute; inset:0; pointer-events:none;
+      background:
+        radial-gradient(ellipse 32% 28% at 0%   0%,  rgba(38,15,3,.92) 0%,transparent 100%),
+        radial-gradient(ellipse 32% 28% at 100% 0%,  rgba(38,15,3,.88) 0%,transparent 100%),
+        radial-gradient(ellipse 32% 30% at 0%   100%,rgba(42,18,3,.90) 0%,transparent 100%),
+        radial-gradient(ellipse 32% 30% at 100% 100%,rgba(42,18,3,.94) 0%,transparent 100%),
+        radial-gradient(ellipse 72% 12% at 50% 0%,   rgba(75,38,8,.42) 0%,transparent 100%),
+        radial-gradient(ellipse 72% 12% at 50% 100%,  rgba(75,38,8,.48) 0%,transparent 100%),
+        radial-gradient(ellipse 12% 62% at 0%   50%,  rgba(58,28,6,.30) 0%,transparent 100%),
+        radial-gradient(ellipse 12% 62% at 100% 50%,  rgba(58,28,6,.30) 0%,transparent 100%);
+      mix-blend-mode:multiply; border-radius:3px;
+    }
+    .paper-inner { position:relative; z-index:1; }
+
+    /* ════════════════════
+       WELCOME SCREEN
+    ════════════════════ */
+    #welcome { gap:24px; text-align:center; }
+
+    .map-icon {
+      font-size:3.6rem; line-height:1;
+      filter:drop-shadow(0 0 20px rgba(200,119,64,.65));
+      animation:flicker 2.8s ease-in-out infinite alternate;
+    }
+    @keyframes flicker {
+      0%   { filter:drop-shadow(0 0 14px rgba(200,119,64,.5)); }
+      40%  { filter:drop-shadow(0 0 30px rgba(220,140,70,.85)) brightness(1.08); }
+      70%  { filter:drop-shadow(0 0 16px rgba(200,119,64,.55)); }
+      100% { filter:drop-shadow(0 0 36px rgba(235,155,80,.9)) brightness(1.12); }
+    }
+
+    .welcome-card {
+      max-width:400px; width:100%; padding:40px 34px;
+      border:1px solid rgba(200,119,64,.1); text-align:center;
+    }
+    .eyebrow {
+      font-size:.67rem; letter-spacing:.22em; text-transform:uppercase;
+      color:var(--amber); margin-bottom:14px; opacity:.8;
+    }
+    .welcome-title {
+      font-family:'Playfair Display',serif; font-weight:700;
+      font-size:clamp(1.45rem,5vw,2rem);
+      color:var(--amber-l); line-height:1.45; margin-bottom:12px;
+      text-shadow:0 0 28px rgba(200,119,64,.25);
+    }
+    .welcome-sub {
+      font-family:'Lora',serif; font-style:italic;
+      color:rgba(240,200,152,.62); font-size:clamp(.82rem,2.4vw,.93rem);
+      line-height:1.75; margin-bottom:34px;
+    }
+    .begin-btn {
+      width:100%; padding:16px; background:var(--dark);
+      border:none; border-radius:14px;
+      box-shadow:7px 7px 18px var(--sh-dark),-4px -4px 12px var(--sh-light);
+      font-family:'Special Elite',cursive; font-size:1rem;
+      letter-spacing:.1em; color:var(--amber-l); cursor:pointer;
+    }
+    .begin-btn:hover { color:var(--amber-gl); }
+
+    /* ════════════════════
+       QUESTION SCREEN
+    ════════════════════ */
+    #question { gap:16px; justify-content:center; }
+
+    /* treasure progress bar with chest icon */
+    .treasure-progress {
+      max-width:380px; width:100%;
+      padding:16px 20px;
+      display:flex; flex-direction:column; align-items:center; gap:10px;
+    }
+    .chest-mini {
+      font-size:2.4rem;
+      filter:drop-shadow(0 0 10px rgba(200,119,64,.3));
+      transition:filter .5s ease, transform .4s ease;
+    }
+    .chest-mini.glow {
+      filter:drop-shadow(0 0 22px rgba(200,119,64,.85)) drop-shadow(0 0 40px rgba(200,119,64,.5));
+      transform:scale(1.12);
+    }
+    .prog-track { width:100%; height:6px; border-radius:4px; }
+    .prog-fill {
+      height:100%; border-radius:4px;
+      background:linear-gradient(90deg,var(--amber),var(--amber-l));
+      box-shadow:0 0 10px rgba(200,119,64,.55);
+      transition:width .65s cubic-bezier(.34,1.3,.64,1);
+      width:0%;
+    }
+    .prog-label {
+      font-size:.68rem; letter-spacing:.16em; text-transform:uppercase;
+      color:rgba(240,200,152,.5);
+    }
+
+    /* question paper */
+    .q-card {
+      max-width:440px; width:100%; padding:24px 26px 28px;
+      filter:drop-shadow(0 6px 28px rgba(0,0,0,.55)) drop-shadow(0 0 12px rgba(200,119,64,.1));
+      transform:rotate(-.35deg);
+    }
+    .q-num { font-size:.67rem; letter-spacing:.18em; text-transform:uppercase; color:rgba(60,35,10,.5); margin-bottom:9px; }
+    .q-text { font-family:'Lora',serif; font-size:clamp(.9rem,2.6vw,1.04rem); color:var(--ink); line-height:1.8; }
+
+    /* options grid */
+    .options { display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:440px; width:100%; }
+    .opt-btn {
+      padding:18px 10px; background:var(--dark); border:none; border-radius:16px;
+      box-shadow:7px 7px 18px var(--sh-dark),-4px -4px 12px var(--sh-light);
+      font-family:'Lora',serif; font-size:clamp(.85rem,2.5vw,.95rem);
+      line-height:1.4; color:var(--amber-l); cursor:pointer;
+      transition:box-shadow .2s,color .2s;
+    }
+    .opt-btn:hover:not(:disabled) { color:var(--amber-gl); box-shadow:5px 5px 12px var(--sh-dark),-3px -3px 8px var(--sh-light); }
+    .opt-btn:active:not(:disabled) { box-shadow:inset 4px 4px 10px var(--sh-dark),inset -2px -2px 8px var(--sh-light); }
+    .opt-btn:disabled { cursor:default; }
+    .opt-btn.correct {
+      box-shadow:inset 3px 3px 8px var(--sh-dark),inset -2px -2px 6px var(--sh-light),
+                 0 0 22px rgba(200,119,64,.6),0 0 8px rgba(200,119,64,.3);
+      color:var(--amber-gl);
+    }
+    .opt-btn.wrong {
+      box-shadow:inset 3px 3px 8px var(--sh-dark),inset -2px -2px 6px var(--sh-light),
+                 0 0 16px rgba(180,60,60,.38);
+      color:#C06060;
+    }
+
+    /* spark */
+    .spark {
+      position:fixed; pointer-events:none; z-index:1000; border-radius:50%;
+      animation:sparkAnim var(--dur,.8s) ease-out forwards;
+    }
+    @keyframes sparkAnim {
+      0%   { opacity:1; transform:translate(0,0) scale(1); }
+      100% { opacity:0; transform:translate(var(--tx,0),var(--ty,0)) scale(.1); }
+    }
+
+    /* ════════════════════
+       CHEST SCREEN
+    ════════════════════ */
+    #chest-screen { gap:18px; text-align:center; }
+
+    .found-label {
+      font-family:'Lora',serif; font-style:italic;
+      color:rgba(240,200,152,.6); font-size:clamp(.78rem,2.2vw,.9rem);
+      letter-spacing:.08em;
+    }
+    .found-title {
+      font-family:'Playfair Display',serif; font-style:italic; font-weight:700;
+      font-size:clamp(1.5rem,6vw,2.4rem);
+      color:var(--amber-gl);
+      text-shadow:0 0 30px rgba(200,119,64,.7),0 0 60px rgba(200,119,64,.35);
+      animation:shimmer 2.5s ease-in-out infinite alternate;
+    }
+    @keyframes shimmer {
+      0%   { text-shadow:0 0 22px rgba(200,119,64,.55),0 0 50px rgba(200,119,64,.25); }
+      100% { text-shadow:0 0 40px rgba(200,119,64,.9),0 0 80px rgba(200,119,64,.55); }
+    }
+
+    .chest-wrap { display:flex; flex-direction:column; align-items:center; gap:10px; cursor:pointer; }
+    .chest-svg {
+      width:155px; height:135px;
+      filter:drop-shadow(0 4px 22px rgba(200,119,64,.45));
+      transition:filter .3s,transform .3s;
+    }
+    .chest-wrap:hover .chest-svg { filter:drop-shadow(0 4px 36px rgba(200,119,64,.75)); transform:translateY(-4px); }
+    .chest-lid-group { transform-box:fill-box; transform-origin:center bottom; transition:transform .9s cubic-bezier(.34,1.4,.64,1); }
+    .chest-wrap.open .chest-lid-group { transform:rotate(-108deg); }
+    .glow-ring {
+      width:110px; height:14px; border-radius:50%;
+      background:radial-gradient(ellipse,rgba(200,119,64,0) 0%,transparent 100%);
+      transition:background .6s; margin-top:-6px;
+    }
+    .chest-wrap.open .glow-ring {
+      background:radial-gradient(ellipse,rgba(200,119,64,.55) 0%,transparent 80%);
+      animation:ringPulse 1.4s ease-in-out infinite alternate;
+    }
+    @keyframes ringPulse { 0%{opacity:.6;transform:scaleX(.9);} 100%{opacity:1;transform:scaleX(1.1);} }
+    .chest-hint {
+      font-family:'Lora',serif; font-style:italic;
+      color:rgba(240,200,152,.6); font-size:.82rem;
+      animation:breathe 2.2s ease-in-out infinite;
+    }
+    @keyframes breathe { 0%,100%{opacity:.5;} 50%{opacity:.95;} }
+
+    /* ════════════════════
+       NOTE SCREEN
+    ════════════════════ */
+    #note-screen { justify-content:flex-start; padding:28px 20px 44px; overflow-y:auto; }
+
+    .note-card {
+      max-width:500px; width:100%; padding:44px 34px;
+      filter:drop-shadow(0 8px 36px rgba(0,0,0,.6)) drop-shadow(0 0 14px rgba(200,119,64,.12));
+      transform:rotate(.3deg); margin:auto;
+    }
+    .note-heading {
+      font-family:'Playfair Display',serif; font-weight:700; font-style:italic;
+      text-align:center; font-size:clamp(1.1rem,4vw,1.45rem);
+      color:#1A0A04; margin-bottom:8px; letter-spacing:.04em;
+    }
+    .note-heading span { color:#3A1A06; }
+    .note-divider {
+      display:flex; align-items:center; gap:10px;
+      margin:14px 0 22px;
+    }
+    .note-divider::before, .note-divider::after {
+      content:''; flex:1; height:1px;
+      background:linear-gradient(90deg,transparent,rgba(60,35,10,.35),transparent);
+    }
+    .note-divider-icon { color:rgba(60,35,10,.4); font-size:.9rem; }
+    .note-body {
+      opacity:0; transition:opacity 1.4s ease;
+      font-family:'Lora',serif; font-size:clamp(.84rem,2.4vw,.94rem);
+      color:var(--ink); line-height:2.05;
+      direction:ltr; text-align:left;
+    }
+    .note-body.show { opacity:1; }
+    .note-body p { margin-bottom:16px; }
+    .note-urdu {
+      font-family:'Noto Nastaliq Urdu','Lora',serif;
+      font-size:clamp(.9rem,2.6vw,1rem);
+      direction:rtl; text-align:right;
+      line-height:2.4; color:#2A1208;
+      margin-bottom:14px;
+    }
+    .note-ameen {
+      font-family:'Playfair Display',serif; font-style:italic;
+      text-align:center; color:#4A2A0A;
+      font-size:.88rem; margin-top:10px; opacity:.85;
+    }
+
+    /* ── footer link ── */
+    .footer-link {
+      display:block; text-align:center;
+      margin-top:22px;
+      font-family:'Special Elite',cursive; font-size:.67rem;
+      letter-spacing:.16em; text-transform:uppercase;
+      color:rgba(200,119,64,.42); text-decoration:none;
+      transition:color .25s; padding-bottom:8px;
+    }
+    .footer-link:hover { color:rgba(200,119,64,.82); }
+
+    /* ── responsive ── */
+    @media(max-width:400px) {
+      .q-card { padding:20px 18px 22px; }
+      .note-card { padding:34px 22px; }
+      .opt-btn { padding:14px 8px; font-size:.82rem; }
+    }
+    @media(max-height:640px) {
+      #question { gap:10px; }
+      .q-card { padding:16px 18px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════
+     WELCOME
+═══════════════════════════ -->
+<div class="screen active" id="welcome">
+  <div class="map-icon">🗺️</div>
+
+  <div class="welcome-card neu">
+    <p class="eyebrow">a special quest, just for you</p>
+    <h1 class="welcome-title">An Amazing Treasure<br>is Waiting for You…</h1>
+    <p class="welcome-sub">
+      Answer a few simple questions<br>
+      and unlock the treasure<br>
+      that was kept just for you 🔐
+    </p>
+    <button class="begin-btn btn-press" onclick="startGame()">Begin the Quest &nbsp;→</button>
+  </div>
+
+  <p style="font-family:'Lora',serif;font-style:italic;color:rgba(240,200,152,.38);font-size:.77rem;margin-top:14px;">made with love 💛</p>
+  <a class="footer-link" href="https://mabood-webstudios.vercel.app" target="_blank">✦ Crafted by Mabood WebStudios ✦</a>
+</div>
+
+<!-- ═══════════════════════════
+     QUESTION
+═══════════════════════════ -->
+<div class="screen" id="question">
+
+  <!-- treasure progress -->
+  <div class="treasure-progress neu">
+    <div class="chest-mini" id="mini-chest">🔒</div>
+    <div class="prog-track neu-in" style="width:100%">
+      <div class="prog-fill" id="prog"></div>
+    </div>
+    <p class="prog-label" id="prog-label">0 of 5 clues found</p>
+  </div>
+
+  <!-- question paper card -->
+  <div class="q-card paper">
+    <div class="paper-inner">
+      <p class="q-num" id="q-num">Clue 1 of 5</p>
+      <p class="q-text" id="q-text"></p>
+    </div>
+  </div>
+
+  <!-- 4 options -->
+  <div class="options">
+    <button class="opt-btn" id="ob0" onclick="pick(0)"></button>
+    <button class="opt-btn" id="ob1" onclick="pick(1)"></button>
+    <button class="opt-btn" id="ob2" onclick="pick(2)"></button>
+    <button class="opt-btn" id="ob3" onclick="pick(3)"></button>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════
+     CHEST
+═══════════════════════════ -->
+<div class="screen" id="chest-screen">
+  <p class="found-label">You found it… ✨</p>
+  <h2 class="found-title">Your Treasure Awaits</h2>
+  <br>
+  <div class="chest-wrap" id="chest-wrap" onclick="openChest()">
+    <svg class="chest-svg" viewBox="0 0 150 130" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="wB" cx="50%" cy="30%" r="70%"><stop offset="0%" stop-color="#8B4A22"/><stop offset="100%" stop-color="#4A2010"/></radialGradient>
+        <radialGradient id="wL" cx="50%" cy="20%" r="75%"><stop offset="0%" stop-color="#9A5228"/><stop offset="100%" stop-color="#572516"/></radialGradient>
+        <radialGradient id="gG" cx="50%" cy="40%" r="60%"><stop offset="0%" stop-color="#F0C870"/><stop offset="100%" stop-color="#A86028"/></radialGradient>
+        <radialGradient id="iG" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFD88A" stop-opacity=".9"/><stop offset="100%" stop-color="#C87740" stop-opacity="0"/></radialGradient>
+      </defs>
+      <!-- body -->
+      <g id="chest-body">
+        <rect x="18" y="62" width="114" height="58" rx="5" fill="url(#wB)" stroke="#C87740" stroke-width="1.8"/>
+        <line x1="18" y1="82" x2="132" y2="82" stroke="#3A1A0A" stroke-width=".8" opacity=".5"/>
+        <line x1="18" y1="92" x2="132" y2="92" stroke="#3A1A0A" stroke-width=".5" opacity=".3"/>
+        <rect x="32" y="62" width="9" height="58" rx="3" fill="#3A1A0A" stroke="#B06830" stroke-width=".8" opacity=".7"/>
+        <rect x="109" y="62" width="9" height="58" rx="3" fill="#3A1A0A" stroke="#B06830" stroke-width=".8" opacity=".7"/>
+        <rect x="18" y="114" width="114" height="6" rx="3" fill="url(#gG)" opacity=".7"/>
+        <rect x="24" y="62" width="14" height="9" rx="3" fill="url(#gG)" stroke="#E8A86C" stroke-width=".8"/>
+        <rect x="112" y="62" width="14" height="9" rx="3" fill="url(#gG)" stroke="#E8A86C" stroke-width=".8"/>
+        <rect x="59" y="76" width="32" height="26" rx="5" fill="#2E1208" stroke="#C87740" stroke-width="1.4"/>
+        <circle cx="75" cy="84" r="5.5" fill="url(#gG)" stroke="#F0C870" stroke-width="1"/>
+        <path d="M72 88 L78 88 L77 95 L73 95 Z" fill="url(#gG)"/>
+        <ellipse id="inner-glow" cx="75" cy="62" rx="40" ry="12" fill="url(#iG)" opacity="0"/>
+      </g>
+      <!-- lid (animated) -->
+      <g class="chest-lid-group" id="lid-group">
+        <rect x="18" y="30" width="114" height="35" rx="4" fill="url(#wL)" stroke="#C87740" stroke-width="1.8"/>
+        <ellipse cx="75" cy="30" rx="57" ry="11" fill="url(#wL)" stroke="#C87740" stroke-width="1.5"/>
+        <ellipse cx="75" cy="30" rx="57" ry="11" fill="none" stroke="url(#gG)" stroke-width="1" opacity=".6"/>
+        <line x1="18" y1="44" x2="132" y2="44" stroke="#3A1A0A" stroke-width=".7" opacity=".45"/>
+        <rect x="32" y="30" width="9" height="35" rx="3" fill="#3A1A0A" stroke="#B06830" stroke-width=".8" opacity=".6"/>
+        <rect x="109" y="30" width="9" height="35" rx="3" fill="#3A1A0A" stroke="#B06830" stroke-width=".8" opacity=".6"/>
+        <rect x="24" y="58" width="14" height="9" rx="3" fill="url(#gG)" stroke="#E8A86C" stroke-width=".8"/>
+        <rect x="112" y="58" width="14" height="9" rx="3" fill="url(#gG)" stroke="#E8A86C" stroke-width=".8"/>
+        <ellipse cx="75" cy="44" rx="16" ry="10" fill="#2E1208" stroke="#C87740" stroke-width="1.2"/>
+        <ellipse cx="75" cy="44" rx="11" ry="6.5" fill="none" stroke="url(#gG)" stroke-width="1" opacity=".8"/>
+        <circle cx="30" cy="37" r="1.5" fill="#F0C870" opacity=".7"><animate attributeName="opacity" values=".3;1;.3" dur="1.8s" repeatCount="indefinite"/></circle>
+        <circle cx="120" cy="34" r="1.2" fill="#F0C870" opacity=".6"><animate attributeName="opacity" values=".2;1;.2" dur="2.2s" repeatCount="indefinite" begin=".5s"/></circle>
+        <circle cx="75" cy="20" r="1.8" fill="#FFE090" opacity=".8"><animate attributeName="opacity" values=".4;1;.4" dur="1.5s" repeatCount="indefinite" begin=".3s"/></circle>
+      </g>
+    </svg>
+    <div class="glow-ring" id="glow-ring"></div>
+    <p class="chest-hint" id="chest-hint">Tap to open your treasure ✨</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════
+     NOTE
+═══════════════════════════ -->
+<div class="screen" id="note-screen">
+  <div class="note-card paper">
+    <div class="paper-inner">
+
+      <h2 class="note-heading">
+        <span>❝</span> Your Smile Is A True Treasure <span>❞</span>
+      </h2>
+
+      <div class="note-divider"><span class="note-divider-icon">✦</span></div>
+
+      <div class="note-body" id="note-body">
+
+        <p>𝑴𝒖𝒋𝒉𝒆 𝒑𝒂𝒕𝒂 𝒉𝒂𝒊 𝒍𝒊𝒇𝒆 𝒎𝒆𝒊𝒏 𝒃𝒂𝒉𝒖𝒕 𝒔𝒊 𝒑𝒂𝒓𝒆𝒔𝒉𝒂𝒏𝒊𝒚𝒂𝒏 𝒂𝒖𝒓 𝒕𝒂𝒌𝒍𝒆𝒆𝒇𝒆𝒊𝒏 𝒂𝒂𝒕𝒊 𝒉𝒂𝒊𝒏. 𝑳𝒆𝒌𝒊𝒏 𝑨𝒍𝒍𝒂𝒉 𝒋𝒂𝒃 𝒂𝒑𝒏𝒆 𝒃𝒂𝒏𝒅𝒆 𝒌𝒐 𝒊𝒎𝒕𝒆𝒉𝒂𝒂𝒏 𝒅𝒆𝒕𝒆 𝒉𝒂𝒊𝒏, 𝒕𝒐𝒉 𝒖𝒏𝒌𝒆 𝒍𝒊𝒚𝒆 𝒃𝒆𝒉𝒕𝒂𝒓𝒆𝒆𝒏 𝒓𝒆𝒉𝒎𝒂𝒕 𝒃𝒉𝒊 𝒓𝒂𝒌𝒉𝒕𝒆 𝒉𝒂𝒊𝒏.</p>
+
+        <p>𝑻𝒐𝒉 𝒚𝒆𝒉 𝒃𝒖𝒓𝒂 𝒘𝒂𝒒𝒕 𝒃𝒉𝒊 𝒈𝒖𝒛𝒂𝒓 𝒋𝒂𝒚𝒆𝒈𝒂, 𝒂𝒖𝒓 𝒑𝒉𝒊𝒓 𝑰𝒏𝒔𝒉𝒂 𝑨𝒍𝒍𝒂𝒉 𝒛𝒊𝒏𝒅𝒂𝒈𝒊 𝒎𝒆𝒊𝒏 𝒔𝒖𝒌𝒐𝒐𝒏 𝒉𝒊 𝒔𝒖𝒌𝒐𝒐𝒏 𝒉𝒐𝒈𝒂.</p>
+
+        <p>𝑨𝒖𝒓 𝒎𝒖𝒔𝒌𝒖𝒓𝒂𝒕𝒆 𝒓𝒆𝒉𝒏𝒂, 𝒌𝒚𝒖𝒏𝒌𝒊 𝒎𝒖𝒔𝒌𝒖𝒓𝒂𝒏𝒂 𝒆𝒌 𝒔𝒖𝒏𝒏𝒂𝒉 𝒃𝒉𝒊 𝒉𝒂𝒊 𝒂𝒖𝒓 𝒌𝒂𝒃𝒉𝒊 𝒌𝒂𝒃𝒉𝒊 𝒅𝒊𝒍 𝒌𝒐 𝒉𝒂𝒍𝒌𝒂 𝒃𝒉𝒊 𝒌𝒂𝒓 𝒅𝒆𝒕𝒂 𝒉𝒂𝒊.<br>
+        𝑨𝒍𝒍𝒂𝒉 𝒂𝒂𝒑𝒌𝒐 𝒃𝒂𝒉𝒖𝒕 𝒔𝒖𝒌𝒐𝒐𝒏, 𝒌𝒉𝒖𝒔𝒉𝒊𝒚𝒂𝒏 𝒂𝒖𝒓 𝒌𝒂𝒎𝒚𝒂𝒃𝒊 𝒅𝒆. 𝑨𝒎𝒆𝒆𝒏.</p>
+
+        <p class="note-ameen">🤲</p>
+
+      </div>
+    </div>
+  </div>
+
+  <a class="footer-link" href="https://mabood-webstudios.vercel.app" target="_blank">
+    ✦ Want a website like this? Visit Mabood WebStudios ✦
+  </a>
+</div>
+
+
+<!-- ═══════════════════════════
+     JAVASCRIPT
+═══════════════════════════ -->
+<script>
+const QS = [
+  {
+    text: "🌍  Which planet do we live on?",
+    answer: "Earth",
+    opts: ["Mars", "Earth", "Jupiter", "Venus"]
+  },
+  {
+    text: "🌈  How many colours are there in a rainbow?",
+    answer: "7",
+    opts: ["5", "9", "7", "3"]
+  },
+  {
+    text: "🐝  What do bees make?",
+    answer: "Honey",
+    opts: ["Honey", "Milk", "Juice", "Sugar"]
+  },
+  {
+    text: "🌊  Which is the largest ocean in the world?",
+    answer: "Pacific",
+    opts: ["Atlantic", "Indian", "Arctic", "Pacific"]
+  },
+  {
+    text: "✋  How many fingers are on one hand?",
+    answer: "5",
+    opts: ["4", "6", "5", "7"]
+  }
+];
+
+let cur = 0, locked = false;
+
+/* screen transitions */
+function goTo(id) {
+  const prev = document.querySelector('.screen.active');
+  const next = document.getElementById(id);
+  if (prev) {
+    prev.classList.add('exit');
+    setTimeout(() => prev.classList.remove('active','exit'), 500);
+  }
+  setTimeout(() => next.classList.add('active'), prev ? 260 : 0);
+}
+
+function startGame() { loadQ(0); goTo('question'); }
+
+function loadQ(i) {
+  const q = QS[i]; locked = false;
+  document.getElementById('q-num').textContent   = `Clue ${i+1} of ${QS.length}`;
+  document.getElementById('q-text').textContent  = q.text;
+  document.getElementById('prog-label').textContent = `${i} of ${QS.length} clues found`;
+  document.getElementById('prog').style.width    = `${(i / QS.length) * 100}%`;
+  // chest mini icon
+  const mc = document.getElementById('mini-chest');
+  const icons = ['🔒','🔒','🔓','🔑','✨','🎁'];
+  mc.textContent = icons[i] || '🔒';
+  mc.classList.remove('glow');
+  for (let j = 0; j < 4; j++) {
+    const b = document.getElementById('ob'+j);
+    b.textContent = q.opts[j]; b.className = 'opt-btn'; b.disabled = false;
+  }
+}
+
+function pick(j) {
+  if (locked) return;
+  const q = QS[cur]; locked = true;
+  for (let k = 0; k < 4; k++) document.getElementById('ob'+k).disabled = true;
+
+  if (q.opts[j] === q.answer) {
+    document.getElementById('ob'+j).classList.add('correct');
+    const b = document.getElementById('ob'+j).getBoundingClientRect();
+    sparks(b.left + b.width/2, b.top + b.height/2, 14, 'sm');
+    // glow chest mini
+    const mc = document.getElementById('mini-chest');
+    mc.textContent = '✨'; mc.classList.add('glow');
+    setTimeout(advance, 750);
+  } else {
+    document.getElementById('ob'+j).classList.add('wrong');
+    for (let k = 0; k < 4; k++) {
+      if (q.opts[k] === q.answer) document.getElementById('ob'+k).classList.add('correct');
+    }
+    setTimeout(advance, 1600);
+  }
+}
+
+function advance() {
+  cur++;
+  if (cur >= QS.length) {
+    document.getElementById('prog').style.width = '100%';
+    document.getElementById('prog-label').textContent = `${QS.length} of ${QS.length} clues found 🎉`;
+    setTimeout(() => {
+      sparks(window.innerWidth/2, window.innerHeight/2, 32, 'big');
+      setTimeout(() => goTo('chest-screen'), 520);
+    }, 400);
+  } else {
+    setTimeout(() => loadQ(cur), 340);
+  }
+}
+
+/* chest open */
+function openChest() {
+  const wrap = document.getElementById('chest-wrap');
+  if (wrap.classList.contains('open')) return;
+  wrap.classList.add('open');
+  document.getElementById('inner-glow').style.cssText = 'opacity:1;transition:opacity .6s ease;';
+  const r = wrap.getBoundingClientRect();
+  sparks(r.left + r.width/2, r.top + r.height/2, 30, 'big');
+  document.getElementById('chest-hint').textContent = '✨';
+  setTimeout(() => {
+    goTo('note-screen');
+    setTimeout(() => document.getElementById('note-body').classList.add('show'), 450);
+  }, 1100);
+}
+
+/* sparks */
+function sparks(x, y, n, type) {
+  const cols = ['#C87740','#F0C870','#E8A86C','#FFD070','#F5B870','#FFF0C0'];
+  for (let i = 0; i < n; i++) {
+    setTimeout(() => {
+      const s = document.createElement('div');
+      s.className = 'spark';
+      const a = Math.random() * 2 * Math.PI;
+      const d = type === 'big' ? 65 + Math.random()*120 : 20 + Math.random()*40;
+      const sz = type === 'big' ? 4 + Math.random()*6 : 2 + Math.random()*3.5;
+      s.style.cssText = `left:${x}px;top:${y}px;width:${sz}px;height:${sz}px;
+        --tx:${Math.cos(a)*d}px;--ty:${Math.sin(a)*d}px;
+        --dur:${.5 + Math.random()*.75}s;
+        background:${cols[Math.floor(Math.random()*cols.length)]};`;
+      document.body.appendChild(s);
+      setTimeout(() => s.remove(), 1400);
+    }, i * (type === 'big' ? 26 : 18));
+  }
+}
+</script>
+</body>
+</html>
